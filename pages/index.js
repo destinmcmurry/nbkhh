@@ -18,7 +18,7 @@ export default function Home() {
         </h1>
 
         <div className={styles.grid}>
-          <Link href={`/bars/${Math.floor(Math.random() * 9)+1}`}>
+          <Link href={`/bars/${Math.floor(Math.random() * (17 - 2 + 1) + 2)}`}>
             <div className={styles.card}>
               Bar Roulette &rarr;
             </div>

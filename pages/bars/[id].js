@@ -5,7 +5,6 @@ import styles from '../../styles/Home.module.css'
 const SHEETS_SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 
 export async function getServerSideProps({ query }) {
-
   const auth = await google.auth.getClient({ scopes: [SHEETS_SCOPE ]});
   const sheets = google.sheets({ version: 'v4', auth });
 
@@ -18,18 +17,67 @@ export async function getServerSideProps({ query }) {
   });
 
   const [barData] = res.data.values;
+  const [name, street_address, zip, happy_hour_ids, image_url, beer, wine, cocktails, food, outdoor] = barData;
+
+  const hhIds = happy_hour_ids.split(',');
+
+  const hhReqests = hhIds.map((id) => {
+    const range = `happy_hours!A${id}:C${id}`;
+    return sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SHEET_ID,
+      range
+    })
+  })
+
+  const hhResults = await Promise.all(hhReqests);
+
+  const happyHours = hhResults.map((res) => {
+    const vals = res.data.values[0];
+    const [hours, description] = vals;
+    return {
+      hours, 
+      description
+    }
+  });
 
   return {
     props: {
-      barData
+      data: {
+        name, 
+        street_address, 
+        zip, 
+        image_url, 
+        beer, 
+        wine, 
+        cocktails, 
+        food, 
+        outdoor,
+        happyHours
+      }
     }
   }
 }
 
-export default function Bar({ barData }) {
-  const [name, street_address, zip, happy_hour_ids, image_url, beer, wine, cocktails, food, outdoor] = barData;
-  const happyHourIds = happy_hour_ids.split(',');
+const DAYS_OF_THE_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+const humanReadableHours = (hours) => {
+  const hoursArr = JSON.parse(hours);
+  const translatedHours = hoursArr.map((hours) => {
+    if (!hours) { return hours; }
+    const start = hours[0] - 1200;
+    const end = hours[1] - 1200;
+    return `${start} til ${end}`;
+  })
+  const hoursWithDays = translatedHours.map((hours, idx) => {
+    if (!hours) return;
+    const day = DAYS_OF_THE_WEEK[idx];
+    return `${day} ${hours}`;
+  });
+  return hoursWithDays;
+}
+
+export default function Bar({ data }) {
+  const { name, street_address, zip, happyHours } = data;
   return (
     <main className={styles.main}>
       <Link href={'/'}>
@@ -44,11 +92,16 @@ export default function Bar({ barData }) {
         {name}
       </h1>
       <div>{`📍 ${street_address} ${zip}`}</div>
-      {
-        // happyHourIds.map((happyHourId) => {
-        //   <HappyHour id={Number(happyHourId)} />
-        // })
-      }
+      <br />
+        {happyHours.map((happyHour, i) => (
+          <div key={`hh-${i}`}>
+            {humanReadableHours(happyHour.hours).map((hours, ii) => (
+              <div style={{textAlign: 'center'}} key={`hh-${i}-${ii}`}>{hours}</div>
+            ))}
+            <br />
+            <div>{happyHour.description}</div>
+          </div>
+        ))}
     </main>
     )
 }
