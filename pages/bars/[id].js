@@ -31,7 +31,7 @@ export async function getServerSideProps({ query }) {
 
   const hhResults = await Promise.all(hhReqests);
 
-  const happyHours = hhResults.map((res) => {
+  const happy_hours = hhResults.map((res) => {
     const vals = res.data.values[0];
     const [hours, description] = vals;
     return {
@@ -52,7 +52,7 @@ export async function getServerSideProps({ query }) {
         cocktails, 
         food, 
         outdoor,
-        happyHours
+        happy_hours
       }
     }
   }
@@ -77,10 +77,10 @@ const humanReadableHours = (hours) => {
 }
 
 export default function Bar({ data }) {
-  const { name, street_address, zip, happyHours } = data;
+  const { name, street_address, zip, happy_hours } = data;
   return (
     <main className={styles.main}>
-      <Link href={'/'}>
+      <Link href={'/bars'} passHref>
         <div className={styles.card}>
           <div className={styles.flex}>
           <div className={styles.backArrow}>&rarr; </div>
@@ -93,7 +93,7 @@ export default function Bar({ data }) {
       </h1>
       <div>{`📍 ${street_address} ${zip}`}</div>
       <br />
-        {happyHours.map((happyHour, i) => (
+        {happy_hours.map((happyHour, i) => (
           <div key={`hh-${i}`}>
             {humanReadableHours(happyHour.hours).map((hours, ii) => (
               <div style={{textAlign: 'center'}} key={`hh-${i}-${ii}`}>{hours}</div>
